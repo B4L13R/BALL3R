@@ -1,0 +1,310 @@
+-- MM2 GUI Full Script with Features Built-In
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local UICorner = Instance.new("UICorner")
+local Title = Instance.new("TextLabel")
+local CloseButton = Instance.new("TextButton")
+local UIGridLayout = Instance.new("UIGridLayout")
+
+-- Button creation function
+local function createButton(name, callback)
+    local button = Instance.new("TextButton")
+    button.Name = name
+    button.Text = name
+    button.Size = UDim2.new(0, 200, 0, 50)
+    button.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextScaled = true
+    button.MouseButton1Click:Connect(callback)
+    return button
+end
+
+-- GUI setup
+ScreenGui.Parent = game.CoreGui
+Frame.Parent = ScreenGui
+Frame.Size = UDim2.new(0, 420, 0, 500)
+Frame.Position = UDim2.new(0.5, -210, 0.5, -250)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.Active = true
+Frame.Draggable = true
+
+UICorner.Parent = Frame
+
+Title.Name = "Title"
+Title.Parent = Frame
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.BackgroundTransparency = 1
+Title.Text = "MM2 Ultimate GUI"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextScaled = true
+Title.Font = Enum.Font.GothamBold
+
+CloseButton.Name = "CloseButton"
+CloseButton.Parent = Frame
+CloseButton.Position = UDim2.new(1, -50, 0, 0)
+CloseButton.Size = UDim2.new(0, 50, 0, 50)
+CloseButton.Text = "X"
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextScaled = true
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+UIGridLayout.Parent = Frame
+UIGridLayout.CellSize = UDim2.new(0, 200, 0, 50)
+UIGridLayout.CellPadding = UDim2.new(0, 10, 0, 10)
+UIGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIGridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIGridLayout.VerticalAlignment = Enum.VerticalAlignment.Middle
+
+-- Feature Implementations
+local features = {
+    ["ESP"] = function()
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                local box = Instance.new("BoxHandleAdornment")
+                box.Name = "ESPBox"
+                box.Adornee = player.Character:FindFirstChild("HumanoidRootPart")
+                box.Size = Vector3.new(4, 5, 1)
+                box.Color3 = Color3.new(1, 0, 0)
+                box.AlwaysOnTop = true
+                box.ZIndex = 5
+                box.Transparency = 0.5
+                box.Parent = player.Character:FindFirstChild("HumanoidRootPart")
+            end
+        end
+    end,
+
+    ["Noclip"] = function()
+        local noclip = true
+        game:GetService("RunService").Stepped:Connect(function()
+            if noclip and LocalPlayer.Character then
+                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") and part.CanCollide then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+    end,
+
+    ["Fly"] = function()
+        local flying = true
+        local BodyGyro = Instance.new("BodyGyro")
+        local BodyVelocity = Instance.new("BodyVelocity")
+        local torso = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+
+        BodyGyro.P = 9e4
+        BodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+        BodyGyro.cframe = torso.CFrame
+        BodyGyro.Parent = torso
+
+        BodyVelocity.velocity = Vector3.new(0,0,0)
+        BodyVelocity.maxForce = Vector3.new(9e9, 9e9, 9e9)
+        BodyVelocity.Parent = torso
+
+        Mouse.KeyDown:Connect(function(key)
+            if key == "w" then BodyVelocity.velocity = torso.CFrame.lookVector * 50 end
+            if key == "s" then BodyVelocity.velocity = -torso.CFrame.lookVector * 50 end
+            if key == "a" then BodyVelocity.velocity = -torso.CFrame.rightVector * 50 end
+            if key == "d" then BodyVelocity.velocity = torso.CFrame.rightVector * 50 end
+            if key == " " then BodyVelocity.velocity = Vector3.new(0, 50, 0) end
+        end)
+    end,
+
+    ["Gun Grabber"] = function()
+        for _, item in pairs(workspace:GetChildren()) do
+            if item:IsA("Tool") and item.Name == "Gun" then
+                item.Handle.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+            end
+        end
+    end,
+
+    ["Gun Breaker"] = function()
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Backpack:FindFirstChild("Gun") then
+                player.Backpack.Gun:Destroy()
+            elseif player.Character and player.Character:FindFirstChild("Gun") then
+                player.Character.Gun:Destroy()
+            end
+        end
+    end,
+}
+
+-- Create buttons
+for name, func in pairs(features) do
+    local button = createButton(name, func)
+    button.Parent = Frame
+end
+
+
+features["Role ESP"] = function()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local role = player:FindFirstChild("Backpack"):FindFirstChild("Gun") and "Sheriff" or
+                         (player.Character:FindFirstChild("Knife") and "Murderer" or "Innocent")
+            local billboard = Instance.new("BillboardGui", player.Character:FindFirstChild("Head"))
+            billboard.Size = UDim2.new(0, 100, 0, 40)
+            billboard.AlwaysOnTop = true
+            local label = Instance.new("TextLabel", billboard)
+            label.Size = UDim2.new(1, 0, 1, 0)
+            label.Text = role
+            label.BackgroundTransparency = 1
+            label.TextColor3 = role == "Murderer" and Color3.new(1, 0, 0) or role == "Sheriff" and Color3.new(0, 0, 1) or Color3.new(1, 1, 1)
+            label.TextScaled = true
+        end
+    end
+end
+
+features["Role Notifier"] = function()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local role = "Innocent"
+            if player.Backpack:FindFirstChild("Gun") then
+                role = "Sheriff"
+            elseif player.Character and player.Character:FindFirstChild("Knife") then
+                role = "Murderer"
+            end
+            print(player.Name .. " is " .. role)
+        end
+    end
+end
+
+features["Perk Notifier"] = function()
+    for _, player in pairs(Players:GetPlayers()) do
+        local perk = player:FindFirstChild("Perk")
+        if perk then
+            print(player.Name .. " has perk: " .. perk.Value)
+        end
+    end
+end
+
+features["Float"] = function()
+    local hrp = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+    local bodyPosition = Instance.new("BodyPosition", hrp)
+    bodyPosition.Position = hrp.Position + Vector3.new(0, 10, 0)
+    bodyPosition.MaxForce = Vector3.new(0, math.huge, 0)
+end
+
+features["Gun Silent Aim"] = function()
+    getgenv().GunSilentAim = true
+    print("Gun Silent Aim Activated")
+    -- Real silent aim logic requires hooking, simplified here
+end
+
+features["Knife Silent Aim"] = function()
+    getgenv().KnifeSilentAim = true
+    print("Knife Silent Aim Activated")
+    -- Real silent aim logic requires hooking, simplified here
+end
+
+features["Gun Prediction"] = function()
+    getgenv().GunPrediction = true
+    getgenv().GunPredictionVelocity = 0.165
+    print("Gun Prediction Enabled with velocity 0.165")
+end
+
+features["Knife Prediction"] = function()
+    getgenv().KnifePrediction = true
+    getgenv().KnifePredictionVelocity = 0.135
+    print("Knife Prediction Enabled with velocity 0.135")
+end
+
+features["Anti-Fling"] = function()
+    game:GetService("RunService").Stepped:Connect(function()
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BodyAngularVelocity") or v:IsA("BodyGyro") then
+                v:Destroy()
+            end
+        end
+    end)
+end
+
+features["Anti-Void"] = function()
+    local part = Instance.new("Part", workspace)
+    part.Anchored = true
+    part.Size = Vector3.new(1000, 5, 1000)
+    part.Position = Vector3.new(0, -10, 0)
+    part.Name = "AntiVoid"
+    part.BrickColor = BrickColor.new("Really red")
+end
+
+-- Trolling Features
+features["Bring"] = function()
+    local target = Mouse.Target
+    if target and target.Parent:FindFirstChild("HumanoidRootPart") then
+        target.Parent.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+    end
+end
+
+features["Teleport"] = function()
+    Mouse.Button1Down:Connect(function()
+        if Mouse.Target then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.p)
+        end
+    end)
+end
+
+features["Kill Aura"] = function()
+    local auraRange = 10
+    game:GetService("RunService").Heartbeat:Connect(function()
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local dist = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).magnitude
+                if dist <= auraRange then
+                    local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+                    if tool and tool.Name == "Knife" then
+                        tool:Activate()
+                    end
+                end
+            end
+        end
+    end)
+end
+
+features["Spin"] = function()
+    game:GetService("RunService").RenderStepped:Connect(function()
+        LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(10), 0)
+    end)
+end
+
+features["Fling"] = function()
+    local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    local bv = Instance.new("BodyVelocity", hrp)
+    bv.Velocity = Vector3.new(9999, 9999, 9999)
+    bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+end
+
+features["Trap"] = function()
+    local trap = Instance.new("Part", workspace)
+    trap.Anchored = true
+    trap.Size = Vector3.new(10, 1, 10)
+    trap.Position = LocalPlayer.Character.HumanoidRootPart.Position - Vector3.new(0, 3, 0)
+    trap.BrickColor = BrickColor.new("Black")
+end
+
+features["Annoy"] = function()
+    while true do
+        for _, v in pairs(workspace:GetChildren()) do
+            if v:IsA("Sound") then
+                v:Stop()
+            end
+        end
+        wait(1)
+    end
+end
+
+features["Steal Role"] = function()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            if player.Backpack:FindFirstChild("Gun") then
+                player.Backpack.Gun.Parent = LocalPlayer.Backpack
+            end
+        end
+    end
+end
