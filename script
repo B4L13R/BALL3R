@@ -160,59 +160,125 @@ end)
 
 
     ["Noclip"] = function()
-        local noclip = true
-        game:GetService("RunService").Stepped:Connect(function()
-            if noclip and LocalPlayer.Character then
-                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-                    if part:IsA("BasePart") and part.CanCollide then
-                        part.CanCollide = false
-                    end
-                end
-            end
-        end)
-    end,
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
+
+local noclipping = false
+local originalWalkSpeed = humanoid.WalkSpeed
+
+local function toggleNoClip()
+ noclipping = not noclipping
+
+ if noclipping then
+  humanoid.WalkSpeed = 50 -- Increased speed for no-clip
+  for _, part in pairs(character:GetDescendants()) do
+   if part:IsA("BasePart") then
+    part.CanCollide = false
+   end
+  end
+ else
+  humanoid.WalkSpeed = originalWalkSpeed
+  for _, part in pairs(character:GetDescendants()) do
+   if part:IsA("BasePart") then
+    part.CanCollide = true
+   end
+  end
+ end
+end
+
+-- Keybind to toggle no-clip (e.g., 'n')
+local userInputService = game:GetService("UserInputService")
+
+userInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+ if gameProcessedEvent then return end -- prevents activation when typing in chat etc.
+
+ if input.KeyCode == Enum.KeyCode.N then
+  toggleNoClip()
+ end
+end)
+
+
 
     ["Fly"] = function()
-        local flying = true
-        local BodyGyro = Instance.new("BodyGyro")
-        local BodyVelocity = Instance.new("BodyVelocity")
-        local torso = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+        local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
 
-        BodyGyro.P = 9e4
-        BodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
-        BodyGyro.cframe = torso.CFrame
-        BodyGyro.Parent = torso
+local flying = false
+local speed = 50
 
-        BodyVelocity.velocity = Vector3.new(0,0,0)
-        BodyVelocity.maxForce = Vector3.new(9e9, 9e9, 9e9)
-        BodyVelocity.Parent = torso
+local function fly()
+	flying = not flying
+	humanoid.WalkSpeed = flying and 0 or 16
+	humanoid.JumpPower = flying and 0 or 50
+	rootPart.Velocity = Vector3.new(0,0,0)
+	
+	while flying do
+		rootPart.Velocity = Vector3.new(0,0,0)
+		rootPart.CFrame = rootPart.CFrame * CFrame.Angles(0,0,0)
+		
+		local direction = Vector3.new(0,0,0)
+		
+		if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.W) then
+			direction = direction + rootPart.CFrame.LookVector
+		end
+		if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.S) then
+			direction = direction - rootPart.CFrame.LookVector
+		end
+		if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.A) then
+			direction = direction - rootPart.CFrame.RightVector
+		end
+		if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.D) then
+			direction = direction + rootPart.CFrame.RightVector
+		end
+		if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Space) then
+			direction = direction + Vector3.new(0, 1, 0)
+		end
+		if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.LeftControl) then
+			direction = direction - Vector3.new(0, 1, 0)
+		end
+		
+		rootPart.Velocity = direction.Unit * speed
+		
+		game:GetService("RunService").Heartbeat:Wait()
+		if not flying or not character or not character:IsDescendant() then break end
+	end
+end
 
-        Mouse.KeyDown:Connect(function(key)
-            if key == "w" then BodyVelocity.velocity = torso.CFrame.lookVector * 50 end
-            if key == "s" then BodyVelocity.velocity = -torso.CFrame.lookVector * 50 end
-            if key == "a" then BodyVelocity.velocity = -torso.CFrame.rightVector * 50 end
-            if key == "d" then BodyVelocity.velocity = torso.CFrame.rightVector * 50 end
-            if key == " " then BodyVelocity.velocity = Vector3.new(0, 50, 0) end
-        end)
-    end,
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessedEvent)
+	if input.KeyCode == Enum.KeyCode.F and not gameProcessedEvent then
+		fly()
+	end
+end)
 
-    ["Gun Grabber"] = function()
-        for _, item in pairs(workspace:GetChildren()) do
-            if item:IsA("Tool") and item.Name == "Gun" then
-                item.Handle.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
-            end
-        end
-    end,
+["Fling"] = function()
+        local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
 
-    ["Gun Breaker"] = function()
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Backpack:FindFirstChild("Gun") then
-                player.Backpack.Gun:Destroy()
-            elseif player.Character and player.Character:FindFirstChild("Gun") then
-                player.Character.Gun:Destroy()
-            end
-        end
-    end,
+local cooldown = false
+local cooldownTime = 1 -- Adjust this value to change the cooldown time in seconds
+
+mouse.Button1Down:Connect(function()
+ if not cooldown then
+ cooldown = true
+
+ local character = player.Character
+ if character and character:FindFirstChild("HumanoidRootPart") then
+ local rootPart = character.HumanoidRootPart
+ local mousePos = mouse.Hit.Position
+ local direction = (mousePos - rootPart.Position).Unit
+ local flingForce = 100 -- Adjust this value to change the fling force
+
+ rootPart.Velocity = direction * flingForce
+
+ wait(cooldownTime)
+ cooldown = false
+ end
+ end
+end)
 }
 
 -- Create buttons
