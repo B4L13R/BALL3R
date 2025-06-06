@@ -65,20 +65,99 @@ UIGridLayout.VerticalAlignment = Enum.VerticalAlignment.Middle
 -- Feature Implementations
 local features = {
     ["ESP"] = function()
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local box = Instance.new("BoxHandleAdornment")
-                box.Name = "ESPBox"
-                box.Adornee = player.Character:FindFirstChild("HumanoidRootPart")
-                box.Size = Vector3.new(4, 5, 1)
-                box.Color3 = Color3.new(1, 0, 0)
-                box.AlwaysOnTop = true
-                box.ZIndex = 5
-                box.Transparency = 0.5
-                box.Parent = player.Character:FindFirstChild("HumanoidRootPart")
+local esp_enabled = true
+
+local function create_esp(player)
+    local character = player.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+
+    local humanoid_root_part = character:FindFirstChild("HumanoidRootPart")
+    if not humanoid_root_part then return end
+
+    local box = Instance.new("BillboardGui")
+    box.Name = "ESPBox"
+    box.Parent = humanoid_root_part
+    box.AlwaysOnTop = true
+    box.Size = UDim2.new(1, 0, 1, 0)
+    box.StudsOffset = Vector3.new(0,2,0)
+
+    local frame = Instance.new("Frame")
+    frame.Parent = box
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.BackgroundTransparency = 0.5
+    frame.BackgroundColor3 = Color3.new(1, 0, 0) -- Red
+
+    local text_label = Instance.new("TextLabel")
+    text_label.Parent = box
+    text_label.Size = UDim2.new(1, 0, 0.2, 0)
+    text_label.Position = UDim2.new(0, 0, -0.2, 0) -- Position above the box
+    text_label.BackgroundColor3 = Color3.new(0, 0, 0)
+    text_label.BackgroundTransparency = 0.5
+    text_label.TextColor3 = Color3.new(1, 1, 1)
+    text_label.TextStrokeColor3 = Color3.new(0, 0, 0)
+    text_label.TextStrokeTransparency = 0
+    text_label.TextScaled = true
+    text_label.Text = player.Name
+
+    return box
+end
+
+local function remove_esp(player)
+    local character = player.Character
+    if character then
+        local esp_box = character.HumanoidRootPart:FindFirstChild("ESPBox")
+        if esp_box then
+            esp_box:Destroy()
+        end
+    end
+end
+
+local function update_esp()
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer then
+            if esp_enabled then
+                if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then continue end
+                if not player.Character.HumanoidRootPart:FindFirstChild("ESPBox") then
+                    create_esp(player)
+                end
+            else
+                remove_esp(player)
             end
         end
-    end,
+    end
+end
+
+game.Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        if esp_enabled and player ~= game.Players.LocalPlayer then
+            wait(1) -- Wait for the character to fully load
+            create_esp(player)
+        end
+    end)
+end)
+
+game.Players.PlayerRemoving:Connect(function(player)
+    remove_esp(player)
+end)
+
+-- Initial update
+update_esp()
+
+--Update ESP every frame
+game:GetService("RunService").RenderStepped:Connect(update_esp)
+
+-- Keybind to toggle ESP (Example: LeftControl)
+local UserInputService = game:GetService("UserInputService")
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    if gameProcessedEvent then return end
+
+    if input.KeyCode == Enum.KeyCode.LeftControl then
+        esp_enabled = not esp_enabled
+        print("ESP: " .. (esp_enabled and "Enabled" or "Disabled"))
+        update_esp()
+    end
+end)
+
 
     ["Noclip"] = function()
         local noclip = true
