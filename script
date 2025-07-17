@@ -22,13 +22,6 @@ trollFunctions.bringPlayer = function()
     return "Player brought to you"
 end
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 -- UI Setup
 local Ball3rMM2 = Instance.new("ScreenGui")
 Ball3rMM2.Name = "Ball3rMM2"
@@ -292,23 +285,11 @@ trollFunctions.afkFarm = function()
     end
 end
 
-trollFunctions.tpToMap = function()
-    local function getCurrentMap()
-        for _, obj in pairs(workspace:GetChildren()) do
-            if obj:IsA("Model") and obj:FindFirstChild("Spawns") then
-                return obj
-            end
-        end
-        return nil
-    end
-
--- List of all MM2 map names you want to support
 local mapNames = {
     "MilBase", "House2", "Office3", "Bank2", "Biolab", "Factory", "Hospital3",
     "ResearchFacility", "PoliceStation", "Theatre", "Hotel2", "Workshop", "Logcabin"
 }
 
--- Function to find which map is currently loaded
 local function getCurrentMap()
     for _, name in ipairs(mapNames) do
         local map = workspace:FindFirstChild(name)
@@ -555,7 +536,8 @@ trollFunctions.stealRole = function()
             -- Remove notification after a few seconds
             wait(3)
             notification:Destroy()
-        end
+         end
+
         wait(1)
     end)
     
