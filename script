@@ -5,9 +5,6 @@ local LocalPlayer = Players.LocalPlayer
 local activeTrolls = {}
 local trollFunctions = {}
 
--- Core Troll Functions (same as before, abbreviated here for space)
--- (Use your original troll functions from the previous script)
-
 -- Example for brevity
 trollFunctions.bringPlayer = function()
     local targetPlayer = getTargetPlayer()
