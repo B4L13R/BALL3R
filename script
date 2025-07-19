@@ -5,8 +5,7 @@ local LocalPlayer = Players.LocalPlayer
 local activeTrolls = {}
 local trollFunctions = {}
 
--- Core Troll Functions (same as before, abbreviated here for space)
--- (Use your original troll functions from the previous script)
+
 
 -- Example for brevity
 trollFunctions.bringPlayer = function()
@@ -453,6 +452,96 @@ trollFunctions.stealRole = function()
     return "Now attempting to steal roles"
 end
 
+trollFunctions.ESP = function()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Colors for each role
+local roleColors = {
+    Murderer = Color3.fromRGB(255, 0, 0),
+    Sheriff = Color3.fromRGB(0, 150, 255),
+    Innocent = Color3.fromRGB(0, 255, 0)
+}
+
+-- Detect role using tools
+local function getPlayerRole(player)
+    local backpack = player:FindFirstChildOfClass("Backpack")
+    local character = player.Character
+    if not backpack or not character then return "Innocent" end
+
+    local function hasTool(name)
+        return (backpack:FindFirstChild(name) or character:FindFirstChild(name)) ~= nil
+    end
+
+    if hasTool("Knife") then
+        return "Murderer"
+    elseif hasTool("Gun") or hasTool("Revolver") then
+        return "Sheriff"
+    else
+        return "Innocent"
+    end
+end
+
+-- Create ESP
+local function createESP(player, role)
+    local character = player.Character
+    if not character then return end
+
+    local head = character:FindFirstChild("Head")
+    if not head then return end
+
+    if head:FindFirstChild("RoleESP") then
+        head.RoleESP:Destroy()
+    end
+
+    local esp = Instance.new("BillboardGui")
+    esp.Name = "RoleESP"
+    esp.Adornee = head
+    esp.Size = UDim2.new(0, 100, 0, 30)
+    esp.StudsOffset = Vector3.new(0, 2.5, 0)
+    esp.AlwaysOnTop = true
+    esp.Parent = head
+
+    local label = Instance.new("TextLabel", esp)
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.TextScaled = true
+    label.Font = Enum.Font.SourceSansBold
+    label.Text = role
+    label.TextColor3 = roleColors[role] or Color3.fromRGB(255, 255, 255)
+end
+
+-- Update ESP for one player
+local function updatePlayerESP(player)
+    wait(1)
+    local role = getPlayerRole(player)
+    createESP(player, role)
+end
+
+-- Update all
+local function updateAllESP()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            updatePlayerESP(player)
+        end
+    end
+end
+
+-- Listen for respawn
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        updatePlayerESP(player)
+    end)
+end)
+
+for _, player in pairs(Players:GetPlayers()) do
+    player.CharacterAdded:Connect(function()
+        updatePlayerESP(player)
+    end)
+end
+
+updateAllESP()
+
 -- Create UI buttons
 local function createButton(name, position, callback)
     local button = Instance.new("TextButton")
@@ -511,7 +600,8 @@ local buttons = {
     {name = "Lobby (Teleport to Spawn)", func = trollFunctions.tpToLobby},
     {name = "Fling Player", func = trollFunctions.flingPlayer},
     {name = "Annoy Player", func = trollFunctions.annoyPlayer},
-    {name = "Steal Role", func = trollFunctions.stealRole}
+    {name = "Steal Role", func = trollFunctions.stealRole},
+    {name = "ESP", func = trollFunctions.stealRole}
 }
 
 for i, button in ipairs(buttons) do
