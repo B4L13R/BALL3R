@@ -5,6 +5,9 @@ local LocalPlayer = Players.LocalPlayer
 local activeTrolls = {}
 local trollFunctions = {}
 
+-- Core Troll Functions (same as before, abbreviated here for space)
+-- (Use your original troll functions from the previous script)
+
 -- Example for brevity
 trollFunctions.bringPlayer = function()
     local targetPlayer = getTargetPlayer()
@@ -33,7 +36,7 @@ MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.Parent = "Ball3rMM2"
+MainFrame.Parent = Ball3rMM2
 
 -- Player selector
 local PlayerLabel = Instance.new("TextLabel")
@@ -256,7 +259,7 @@ end
 
 local mapNames = {
     "MilBase", "House", "Office", "Bank", "Biolab", "Factory", "Hospital",
-    "ResearchFacility", "PoliceStation", "Theatre", "Hotel", "Workshop", "Logcabin", "BeachResort"
+    "ResearchFacility", "PoliceStation", "Theatre", "Hotel", "Workshop", "Logcabin"
 }
 
 local function getCurrentMap()
@@ -548,19 +551,6 @@ notification.Position = UDim2.new(0, 0, 1, -30)
 notification.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 notification.BorderSizePixel = 0
 notification.Text = "note: the tp to map button, tps only above map if you want to go in the map tp to a player on the map instead"
-notification.TextColor3 = Color3.fromRGB(0, 255, 0)
-notification.TextSize = 14
-notification.Font = Enum.Font.Gotham
-notification.Parent = MainFrame
-
-
-local notification = Instance.new("TextLabel")
-notification.Name = "Notification"
-notification.Size = UDim2.new(1, 0, 0, 30)
-notification.Position = UDim2.new(0, 0, 1, -30)
-notification.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-notification.BorderSizePixel = 0
-notification.Text = "made by ball3r"
 notification.TextColor3 = Color3.fromRGB(0, 255, 0)
 notification.TextSize = 14
 notification.Font = Enum.Font.Gotham
