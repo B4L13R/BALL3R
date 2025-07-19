@@ -110,7 +110,7 @@ local function updatePlayerList()
             child:Destroy()
         end
     end
-    
+
     -- Add all players
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer then
@@ -133,14 +133,14 @@ local function updatePlayerList()
             end)
         end
     end
-    
+
     PlayerList.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y)
 end
 
 DropdownButton.MouseButton1Click:Connect(function()
     isDropdownOpen = not isDropdownOpen
     PlayerList.Visible = isDropdownOpen
-    
+
     if isDropdownOpen then
         updatePlayerList()
         DropdownButton.Text = "▲"
@@ -158,45 +158,14 @@ local function getPlayerCharacter(player)
 end
 
 -- Troll Functions
-trollFunctions.bringPlayer = function()
-    if not targetPlayer then
-        return "Select a player first!"
-    end
-    
-    local character = getPlayerCharacter(targetPlayer)
-    local localCharacter = getPlayerCharacter(LocalPlayer)
-    
-    if character and localCharacter then
-        -- Create a loop that brings the player to you repeatedly
-        local bringingLoop = RunService.Heartbeat:Connect(function()
-            character.HumanoidRootPart.CFrame = localCharacter.HumanoidRootPart.CFrame * CFrame.new(0, 0, -3)
-        end)
-        
-        activeTrolls.bringPlayer = bringingLoop
-        return "Now bringing " .. targetPlayer.Name .. " to you!"
-    else
-        return "Failed to get characters!"
-    end
-end
-
-trollFunctions.stopBringing = function()
-    if activeTrolls.bringPlayer then
-        activeTrolls.bringPlayer:Disconnect()
-        activeTrolls.bringPlayer = nil
-        return "Stopped bringing player"
-    else
-        return "Not currently bringing any player"
-    end
-end
-
 trollFunctions.teleportTo = function()
     if not targetPlayer then
         return "Select a player first!"
     end
-    
+
     local character = getPlayerCharacter(targetPlayer)
     local localCharacter = getPlayerCharacter(LocalPlayer)
-    
+
     if character and localCharacter then
         localCharacter.HumanoidRootPart.CFrame = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -3)
         return "Teleported to " .. targetPlayer.Name
@@ -211,48 +180,48 @@ trollFunctions.killAura = function()
         activeTrolls.killAura = nil
         return "Kill aura disabled"
     end
-    
+
     local function checkForKnife()
         if LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")) then
             return true
         end
         return false
     end
-    
+
     local function stab(player)
         local character = getPlayerCharacter(player)
         local localCharacter = getPlayerCharacter(LocalPlayer)
-        
+
         if character and localCharacter and checkForKnife() then
             local knife = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
             if knife and knife.Parent ~= LocalPlayer.Character then
                 LocalPlayer.Character.Humanoid:EquipTool(knife)
             end
-            
+
             -- Get close to target
             local originalPosition = localCharacter.HumanoidRootPart.CFrame
             localCharacter.HumanoidRootPart.CFrame = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2)
-            
+
             -- Trigger knife stab (depends on game mechanics)
             local stabEvent = knife:FindFirstChild("StabEvent") or ReplicatedStorage:FindFirstChild("StabEvent")
             if stabEvent and stabEvent:IsA("RemoteEvent") then
                 stabEvent:FireServer(player)
             end
-            
+
             -- Return to original position
             wait(0.2)
             localCharacter.HumanoidRootPart.CFrame = originalPosition
         end
     end
-    
+
     activeTrolls.killAura = RunService.Heartbeat:Connect(function()
         if not checkForKnife() then return end
-        
+
         for _, player in pairs(Players:GetPlayers()) do
             if player ~= LocalPlayer and getPlayerCharacter(player) then
                 local distance = (getPlayerCharacter(LocalPlayer).HumanoidRootPart.Position - 
                                  getPlayerCharacter(player).HumanoidRootPart.Position).Magnitude
-                
+
                 if distance < 20 then
                     stab(player)
                     wait(1) -- Small cooldown between stabs
@@ -260,7 +229,7 @@ trollFunctions.killAura = function()
             end
         end
     end)
-    
+
     return "Kill aura enabled - will stab nearby players when you're murderer"
 end
 
@@ -269,13 +238,16 @@ trollFunctions.afkFarm = function()
     afkEnabled = not afkEnabled
 
     if afkEnabled then
-        -- Start AFK loop
         task.spawn(function()
             while afkEnabled do
                 task.wait(1)
-                local target = game:GetService("Workspace"):FindFirstChild("Lobby")
-                if target and target:FindFirstChild("MainLobby") and target.MainLobby:FindFirstChild("Parts") and target.MainLobby.Parts:FindFirstChild("Part") then
-                    game.Players.LocalPlayer.Character:MoveTo(target.MainLobby.Parts.Part.Position)
+                local char = game.Players.LocalPlayer.Character
+                local invisWall = workspace:FindFirstChild("Lobby") 
+                    and workspace.Lobby:FindFirstChild("InvisWalls") 
+                    and workspace.Lobby.InvisWalls:FindFirstChild("Blocking")
+
+                if char and char:FindFirstChild("HumanoidRootPart") and invisWall then
+                    char:MoveTo(invisWall.Position)
                 end
             end
         end)
@@ -286,8 +258,8 @@ trollFunctions.afkFarm = function()
 end
 
 local mapNames = {
-    "MilBase", "House2", "Office3", "Bank2", "Biolab", "Factory", "Hospital3",
-    "ResearchFacility", "PoliceStation", "Theatre", "Hotel2", "Workshop", "Logcabin"
+    "MilBase", "House", "Office", "Bank", "Biolab", "Factory", "Hospital",
+    "ResearchFacility", "PoliceStation", "Theatre", "Hotel", "Workshop", "Logcabin", "BeachResort"
 }
 
 local function getCurrentMap()
@@ -315,10 +287,12 @@ end
 
 trollFunctions.tpToLobby = function()
     local char = game.Players.LocalPlayer.Character
-    local spawn = game:GetService("Workspace"):FindFirstChild("Lobby") and game.Workspace.Lobby:FindFirstChild("Spawns") and game.Workspace.Lobby.Spawns:FindFirstChild("Spawn")
+    local lobby = workspace:FindFirstChild("Lobby")
+    local spawns = lobby and lobby:FindFirstChild("Spawns")
+    local spawnLocation = spawns and (spawns:FindFirstChild("SpawnLocation") or spawns:FindFirstChild("Spawn"))
 
-    if char and char:FindFirstChild("HumanoidRootPart") and spawn then
-        char:MoveTo(spawn.Position)
+    if char and char:FindFirstChild("HumanoidRootPart") and spawnLocation then     
+        char:MoveTo(spawnLocation.Position)
         return "Teleported to Lobby Spawn"
     else
         return "Spawn or character not found"
@@ -329,111 +303,46 @@ trollFunctions.flingPlayer = function()
     if not targetPlayer then
         return "Select a player first!"
     end
-    
+
     local character = getPlayerCharacter(targetPlayer)
     local localCharacter = getPlayerCharacter(LocalPlayer)
-    
+
     if character and localCharacter then
         -- Store original settings
         local oldVelocity = localCharacter.HumanoidRootPart.Velocity
         local oldPosition = localCharacter.HumanoidRootPart.CFrame
-        
+
         -- Apply extreme velocity to fling the player
         localCharacter.HumanoidRootPart.Velocity = Vector3.new(0, 5000, 0)
         localCharacter.HumanoidRootPart.CFrame = character.HumanoidRootPart.CFrame
-        
+
         -- Wait briefly for physics to apply
         wait(0.2)
-        
+
         -- Restore original settings
         localCharacter.HumanoidRootPart.Velocity = oldVelocity
         localCharacter.HumanoidRootPart.CFrame = oldPosition
-        
+
         return "Flung " .. targetPlayer.Name
     else
         return "Failed to get characters!"
     end
 end
 
-trollFunctions.trapPlayer = function()
-    if not targetPlayer then
-        return "Select a player first!"
-    end
-    
-    local character = getPlayerCharacter(targetPlayer)
-    if not character then
-        return "Failed to get character!"
-    end
-    
-    if activeTrolls.trapPlayer then
-        -- Remove existing trap
-        for _, part in pairs(activeTrolls.trapParts or {}) do
-            if part and part.Parent then
-                part:Destroy()
-            end
-        end
-        activeTrolls.trapPlayer = nil
-        activeTrolls.trapParts = nil
-        return "Removed trap from player"
-    end
-    
-    -- Create invisible trap around player
-    local trapParts = {}
-    local size = 5
-    local transparency = 0.5
-    
-    for i = 1, 6 do
-        local part = Instance.new("Part")
-        part.Anchored = true
-        part.CanCollide = true
-        part.Transparency = transparency
-        part.BrickColor = BrickColor.new("Really red")
-        part.Material = Enum.Material.ForceField
-        
-        if i == 1 then -- Bottom
-            part.Size = Vector3.new(size, 1, size)
-            part.CFrame = character.HumanoidRootPart.CFrame * CFrame.new(0, -3, 0)
-        elseif i == 2 then -- Top
-            part.Size = Vector3.new(size, 1, size)
-            part.CFrame = character.HumanoidRootPart.CFrame * CFrame.new(0, 3, 0)
-        elseif i == 3 then -- Front
-            part.Size = Vector3.new(size, size, 1)
-            part.CFrame = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -size/2)
-        elseif i == 4 then -- Back
-            part.Size = Vector3.new(size, size, 1)
-            part.CFrame = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, size/2)
-        elseif i == 5 then -- Left
-            part.Size = Vector3.new(1, size, size)
-            part.CFrame = character.HumanoidRootPart.CFrame * CFrame.new(-size/2, 0, 0)
-        else -- Right
-            part.Size = Vector3.new(1, size, size)
-            part.CFrame = character.HumanoidRootPart.CFrame * CFrame.new(size/2, 0, 0)
-        end
-        
-        part.Parent = workspace
-        table.insert(trapParts, part)
-    end
-    
-    activeTrolls.trapPlayer = true
-    activeTrolls.trapParts = trapParts
-    
-    return "Trapped " .. targetPlayer.Name
-end
-
 trollFunctions.annoyPlayer = function()
     if not targetPlayer then
         return "Select a player first!"
     end
-    
+
     if activeTrolls.annoyPlayer then
         activeTrolls.annoyPlayer:Disconnect()
         activeTrolls.annoyPlayer = nil
         return "Stopped annoying player"
     end
-    
+
     local character = getPlayerCharacter(targetPlayer)
     local localCharacter = getPlayerCharacter(LocalPlayer)
-    
+
     if character and localCharacter then
         local positions = {
             CFrame.new(0, 0, -3),  -- Front
@@ -442,21 +351,21 @@ trollFunctions.annoyPlayer = function()
             CFrame.new(3, 0, 0),   -- Right
             CFrame.new(0, 3, 0),   -- Above
         }
-        
+
         local posIndex = 1
-        
+
         activeTrolls.annoyPlayer = RunService.Heartbeat:Connect(function()
             if getPlayerCharacter(targetPlayer) and getPlayerCharacter(LocalPlayer) then
                 -- Teleport around the target player
                 localCharacter.HumanoidRootPart.CFrame = 
                     character.HumanoidRootPart.CFrame * positions[posIndex]
-                
+
                 -- Cycle through positions
                 posIndex = posIndex + 1
                 if posIndex > #positions then
                     posIndex = 1
                 end
-                
+
                 -- Small delay to make it less intensive
                 wait(0.1)
             else
@@ -464,7 +373,7 @@ trollFunctions.annoyPlayer = function()
                 activeTrolls.annoyPlayer = nil
             end
         end)
-        
+
         return "Now annoying " .. targetPlayer.Name
     else
         return "Failed to get characters!"
@@ -496,7 +405,7 @@ trollFunctions.stealRole = function()
                         end
                     end
                 end
-                
+
                 -- Check for sheriff
                 if player.Character:FindFirstChild("Gun") or player.Backpack:FindFirstChild("Gun") then
                     -- Attempt to steal the gun (implementation would depend on game mechanics)
@@ -516,7 +425,7 @@ trollFunctions.stealRole = function()
         end
         return nil
     end
-    
+
     activeTrolls.stealRole = RunService.Heartbeat:Connect(function()
         local result = checkAndStealRole()
         if result then
@@ -532,7 +441,7 @@ trollFunctions.stealRole = function()
             notification.TextSize = 14
             notification.Font = Enum.Font.Gotham
             notification.Parent = MainFrame
-            
+
             -- Remove notification after a few seconds
             wait(3)
             notification:Destroy()
@@ -540,7 +449,7 @@ trollFunctions.stealRole = function()
 
         wait(1)
     end)
-    
+
     return "Now attempting to steal roles"
 end
 
@@ -557,18 +466,18 @@ local function createButton(name, position, callback)
     button.TextSize = 14
     button.Font = Enum.Font.GothamSemibold
     button.Parent = MainFrame
-    
+
     button.MouseEnter:Connect(function()
         button.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     end)
-    
+
     button.MouseLeave:Connect(function()
         button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     end)
-    
+
     button.MouseButton1Click:Connect(function()
         local result = callback()
-        
+
         -- Show result in notification
         local notification = Instance.new("TextLabel")
         notification.Name = "Notification"
@@ -581,13 +490,13 @@ local function createButton(name, position, callback)
         notification.TextSize = 14
         notification.Font = Enum.Font.Gotham
         notification.Parent = MainFrame
-        
+
         -- Remove notification after a few seconds
         delay(3, function()
             notification:Destroy()
         end)
     end)
-    
+
     return button
 end
 
@@ -595,15 +504,12 @@ end
 local buttonY = 0.25
 local buttonSpacing = 0.075
 local buttons = {
-    {name = "Bring Player", func = trollFunctions.bringPlayer},
-    {name = "Stop Bringing", func = trollFunctions.stopBringing},
     {name = "Teleport To", func = trollFunctions.teleportTo},
     {name = "Kill Aura", func = trollFunctions.killAura},
     {name = "AFK Farm", func = trollFunctions.afkFarm},
     {name = "Map (Teleport to Current)", func = trollFunctions.tpToMap},
     {name = "Lobby (Teleport to Spawn)", func = trollFunctions.tpToLobby},
     {name = "Fling Player", func = trollFunctions.flingPlayer},
-    {name = "Trap Player", func = trollFunctions.trapPlayer},
     {name = "Annoy Player", func = trollFunctions.annoyPlayer},
     {name = "Steal Role", func = trollFunctions.stealRole}
 }
@@ -633,16 +539,7 @@ closeButton.MouseButton1Click:Connect(function()
             connection:Disconnect()
         end
     end
-    
-    -- Remove trap parts if they exist
-    if activeTrolls.trapParts then
-        for _, part in pairs(activeTrolls.trapParts) do
-            if part and part.Parent then
-                part:Destroy()
-            end
-        end
-    end
-    
+
     Ball3rMM2:Destroy()
 end)
 
