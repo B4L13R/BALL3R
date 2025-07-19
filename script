@@ -33,7 +33,7 @@ MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 300, 0, 400)
 MainFrame.Position = UDim2.new(0.8, 0, 0.5, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-MainFrame.BorderSizePixel = 0
+MainFrame.BorderSizePixel = 1
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = Ball3rMM2
@@ -259,7 +259,7 @@ end
 
 local mapNames = {
     "MilBase", "House", "Office", "Bank", "Biolab", "Factory", "Hospital",
-    "ResearchFacility", "PoliceStation", "Theatre", "Hotel", "Workshop", "Logcabin"
+  "ResearchFacility", "PoliceStation", "Theatre", "Hotel", "Workshop", "Logcabin", "BeachResort"
 }
 
 local function getCurrentMap()
