@@ -241,7 +241,7 @@ trollFunctions.afkFarm = function()
                 local char = game.Players.LocalPlayer.Character
                 local invisWall = workspace:FindFirstChild("Lobby") 
                     and workspace.Lobby:FindFirstChild("InvisWalls") 
-                    and workspace.Lobby.InvisWalls:FindFirstChild("Blocking")
+                    and workspace.Lobby.InvisWalls:FindFirstChild("Invis")
 
                 if char and char:FindFirstChild("HumanoidRootPart") and invisWall then
                     char:MoveTo(invisWall.Position)
@@ -251,6 +251,30 @@ trollFunctions.afkFarm = function()
         return "AFK Farm: ENABLED"
     else
         return "AFK Farm: DISABLED"
+    end
+end
+
+local flingyEnabled = false
+trollFunctions.flingyourself = function()
+    flingyEnabled = not flingyEnabled
+
+    if flingyEnabled then
+        task.spawn(function()
+            while flingyEnabled do
+                task.wait(1)
+                local char = game.Players.LocalPlayer.Character
+                local invisWall = workspace:FindFirstChild("Lobby") 
+                    and workspace.Lobby:FindFirstChild("InvisWalls") 
+                    and workspace.Lobby.InvisWalls:FindFirstChild("Invis")
+
+                if char and char:FindFirstChild("HumanoidRootPart") and invisWall then
+                    char.HumanoidRootPart.CFrame = invisWall.CFrame
+                end
+            end
+        end)
+        return "FLINGING: use it while walking for better results"
+    else
+        return "STOPPING: if it doesnt tp you then reset"
     end
 end
 
@@ -578,6 +602,7 @@ local buttons = {
     {name = "Teleport To", func = trollFunctions.teleportTo},
     {name = "Kill Aura", func = trollFunctions.killAura},
     {name = "AFK Farm", func = trollFunctions.afkFarm},
+    {name = "Fling Yourself", func = trollFunctions.flingyourself},
     {name = "Map (Teleport to Current)", func = trollFunctions.tpToMap},
     {name = "Lobby (Teleport to Spawn)", func = trollFunctions.tpToLobby},
     {name = "Fling Player", func = trollFunctions.flingPlayer},
@@ -614,19 +639,6 @@ closeButton.MouseButton1Click:Connect(function()
 
     Ball3rMM2:Destroy()
 end)
-
--- Notify that script is loaded
-local notification = Instance.new("TextLabel")
-notification.Name = "Notification"
-notification.Size = UDim2.new(1, 0, 0, 30)
-notification.Position = UDim2.new(0, 0, 1, -30)
-notification.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-notification.BorderSizePixel = 0
-notification.Text = "note: the tp to map button, tps only above map if you want to go in the map tp to a player on the map instead"
-notification.TextColor3 = Color3.fromRGB(0, 255, 0)
-notification.TextSize = 14
-notification.Font = Enum.Font.Gotham
-notification.Parent = MainFrame
 
 -- Auto-update player list when players join/leave
 Players.PlayerAdded:Connect(updatePlayerList)
